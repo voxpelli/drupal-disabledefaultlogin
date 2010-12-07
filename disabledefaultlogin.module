@@ -6,12 +6,20 @@
  * Main file for the disabling of the default login system.
  */
 
+
+/* ************************************************************************* *
+ * DRUPAL HOOKS
+ * ************************************************************************* */
+
 /**
  * Implementation of hook_perm().
  */
 function disabledefaultlogin_perm() {
   return array(
+    // Permission for the access of the user edit page - doesn't handle anything else
     'access default user edit page',
+    // Permission for setting user credentials - needed by the registration form
+    // and the e-mail and password fields in the user edit form.
     'set default login credentials',
   );
 }
@@ -39,6 +47,8 @@ function disabledefaultlogin_form_user_pass_alter(&$form, &$form_state) {
  */
 function disabledefaultlogin_form_user_profile_form_alter(&$form, &$form_state) {
   if ($form['_category']['#value'] == 'account') {
+    // Check of we're allowed to set login credentials and hide e-mail and password fields if not.
+    // If we're admin we can do set it for anyone.
     $access = ($GLOBALS['user']->uid == $uid && user_access('set default login credentials')) || user_access('administer users');
 
     $form['account']['mail']['#access'] = $access;
@@ -46,14 +56,35 @@ function disabledefaultlogin_form_user_profile_form_alter(&$form, &$form_state) 
   }
 }
 
+
+/* ************************************************************************* *
+ * ACCESS CHECKS
+ * ************************************************************************* */
+
+/**
+ * Checks whether the user is allowed to access the edit user page
+ *
+ * @param object $account
+ * @return boolean
+ */
 function disabledefaultlogin_edit_access($account) {
   return (user_access('access default user edit page') || user_access('administer users')) && $account->uid > 0;
 }
 
+/**
+ * Checks whether the user is allowed to access the register user page
+ *
+ * @return boolean
+ */
 function disabledefaultlogin_register_access() {
   return user_is_anonymous() && user_access('set default login credentials');
 }
 
+/**
+ * Validates the request password form to check a user is allowed to do so
+ *
+ * @return void
+ */
 function disabledefaultlogin_user_pass_validate($form, &$form_state) {
   $values = $form_state['values'];
   if (!empty($values['account'])) {

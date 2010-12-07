@@ -1,0 +1,64 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Main file for the disabling of the default login system.
+ */
+
+/**
+ * Implementation of hook_perm().
+ */
+function disabledefaultlogin_perm() {
+  return array(
+    'access default user edit page',
+    'set default login credentials',
+  );
+}
+
+/**
+ * Implementation of hook_menu_alter().
+ */
+function disabledefaultlogin_menu_alter(&$items) {
+  $items['user/%user_category/edit']['access callback'] = 'disabledefaultlogin_edit_access';
+  $items['user/register']['access callback'] = 'disabledefaultlogin_register_access';
+}
+
+/**
+ * Implementation of hook_form_FORM_ID_alter().
+ */
+function disabledefaultlogin_form_user_pass_alter(&$form, &$form_state) {
+  if (!isset($form['#validate'])) {
+    $form['#validate'] = array('user_pass_validate');
+  }
+  $form['#validate'][] = 'disabledefaultlogin_user_pass_validate';
+}
+
+/**
+ * Implementation of hook_form_FORM_ID_alter().
+ */
+function disabledefaultlogin_form_user_profile_form_alter(&$form, &$form_state) {
+  if ($form['_category']['#value'] == 'account') {
+    $access = ($GLOBALS['user']->uid == $uid && user_access('set default login credentials')) || user_access('administer users');
+
+    $form['account']['mail']['#access'] = $access;
+    $form['account']['pass']['#access'] = $access;
+  }
+}
+
+function disabledefaultlogin_edit_access($account) {
+  return (user_access('access default user edit page') || user_access('administer users')) && $account->uid > 0;
+}
+
+function disabledefaultlogin_register_access() {
+  return user_is_anonymous() && user_access('set default login credentials');
+}
+
+function disabledefaultlogin_user_pass_validate($form, &$form_state) {
+  $values = $form_state['values'];
+  if (!empty($values['account'])) {
+    if (!user_access('set default login credentials', $values['account'])) {
+      form_set_error('name', t('%name is not allowed to request a new password.', array('%name' => trim($values['name']))));
+    }
+  }
+}

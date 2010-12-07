@@ -1,0 +1,4 @@
+; $Id$
+name = Disable Default Login
+description = Makes it possible to disable the default username/password based login system
+core = 6.x

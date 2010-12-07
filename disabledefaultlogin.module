@@ -21,6 +21,8 @@ function disabledefaultlogin_perm() {
     // Permission for setting user credentials - needed by the registration form
     // and the e-mail and password fields in the user edit form.
     'set default login credentials',
+    // Permission for the access of the default password reset page
+    'access default reset password page',
   );
 }
 
@@ -30,6 +32,7 @@ function disabledefaultlogin_perm() {
 function disabledefaultlogin_menu_alter(&$items) {
   $items['user/%user_category/edit']['access callback'] = 'disabledefaultlogin_edit_access';
   $items['user/register']['access callback'] = 'disabledefaultlogin_register_access';
+  $items['user/password']['access callback'] = 'disabledefaultlogin_reset_password_access';
 }
 
 /**
@@ -78,6 +81,15 @@ function disabledefaultlogin_edit_access($account) {
  */
 function disabledefaultlogin_register_access() {
   return user_is_anonymous() && user_access('set default login credentials');
+}
+
+/**
+ * Checks whether the user is allowed to access the reset password page
+ *
+ * @return boolean
+ */
+function disabledefaultlogin_reset_password_access() {
+  return user_is_anonymous() && user_access('access default reset password page');
 }
 
 /**
